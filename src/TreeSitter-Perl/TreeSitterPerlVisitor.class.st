@@ -1,11 +1,6 @@
 Class {
 	#name : 'TreeSitterPerlVisitor',
-	#superclass : 'Object',
-	#instVars : [
-		'sourceCode',
-		'indent',
-		'outputStream'
-	],
+	#superclass : 'TSVisitor',
 	#category : 'TreeSitter-Perl',
 	#package : 'TreeSitter-Perl'
 }
@@ -25,72 +20,6 @@ TreeSitterPerlVisitor >> doesNotUnderstand: aMessage [
 	self visitNode: aMessage arguments first
 ]
 
-{ #category : 'tracing' }
-TreeSitterPerlVisitor >> indentedLine [
-
-	(indent = 0) ifTrue: [ ^self ].
-
-	1 to: indent do: [ :i |
-		(i even)
-			ifTrue: [outputStream << '| ']
-			ifFalse: [ outputStream << '  ' ]
-	]
-]
-
-{ #category : 'instance creation' }
-TreeSitterPerlVisitor >> on: aTSNode [
-
-	indent := 0.
-	^String streamContents: [ :stream |
-		outputStream := stream.
-		aTSNode accept: self
-	]
-]
-
-{ #category : 'accessing' }
-TreeSitterPerlVisitor >> outputStream [
-	^ outputStream
-]
-
-{ #category : 'accessing' }
-TreeSitterPerlVisitor >> sourceCode: aString [
-
-	sourceCode := aString 
-]
-
-{ #category : 'instance creation' }
-TreeSitterPerlVisitor >> traceFields: aTSNode [
-
-	| fields |
-	fields := aTSNode collectFieldNameOfNamedChild.
-	outputStream << ' ['.
-	fields keys do: [ :k |
-		outputStream
-			<< ' ' ;
-			<< (k ifEmpty: ['-'])
-	].
-	outputStream << ' ]'.
-
-]
-
-{ #category : 'instance creation' }
-TreeSitterPerlVisitor >> traceSourceCode: aTSNode [
-
-	| lines |
-	sourceCode ifNil: [ ^self ].
-
-	lines := (aTSNode textFromSourceText: sourceCode) lines.
-	outputStream
-		<< ': ''' ;
-		<< lines first.
-	(lines size > 1)
-	ifTrue: [
-		outputStream
-			<< ' ...'
-	].
-	outputStream << $'
-]
-
 { #category : 'visiting' }
 TreeSitterPerlVisitor >> visitNode: aTSNode [
 
@@ -102,21 +31,7 @@ TreeSitterPerlVisitor >> visitNode: aTSNode [
 { #category : 'visiting' }
 TreeSitterPerlVisitor >> visitPerlAbstractNode: aTSNode [
 
-	| result |
-	self indentedLine.
-	outputStream
-		<< 'visiting ' ;
-		<< aTSNode type.
-	self traceSourceCode: aTSNode.
-	self traceFields: aTSNode.
-	outputStream cr.
-
-	indent := indent  + 1.
-	result := aTSNode collectNamedChild collect: [ :child |
-		child accept: self ].
-	indent := indent - 1.
-
-	^result 
+	super visitNode: aTSNode
 ]
 
 { #category : 'visiting' }
