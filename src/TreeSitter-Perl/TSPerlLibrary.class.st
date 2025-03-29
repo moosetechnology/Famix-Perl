@@ -5,7 +5,7 @@ Class {
 	#package : 'TreeSitter-Perl'
 }
 
-{ #category : 'accessing - platform' }
+{ #category : 'as yet unclassified' }
 TSPerlLibrary >> tree_sitter_perl [
 
 	^ self ffiCall: 'TSLanguage * tree_sitter_perl ()'
