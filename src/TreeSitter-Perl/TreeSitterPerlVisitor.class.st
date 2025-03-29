@@ -6,186 +6,274 @@ Class {
 }
 
 { #category : 'reflective operations' }
-TreeSitterPerlVisitor >> doesNotUnderstand: aMessage [
+TreeSitterPerlVisitor >> createVisitMethod: aMessage [
 
-	| code |
+	| fields aTSNode |
+	aTSNode := aMessage arguments first.
+	fields := aMessage arguments second.
+
+	^String streamContents: [ :str |
+		str
+			<< 'visitPerl'.
+			($_ split: aTSNode type) do: [ :word | str << word capitalized ].
+			str
+				<< ': aTSNode withFields: fields' ;
+				cr ;
+				<< '	^{' ;
+				cr.
+
+		fields keysDo: [ :key |
+			str
+				<< '		self visitKey: ''' ;
+				<< key ;
+				<< ''' inDictionnary: fields.' ;
+				cr
+		].
+		str
+			<< '	}' ;
+			cr
+	]
+
+]
+
+{ #category : 'reflective operations' }
+TreeSitterPerlVisitor >> doesNotUnderstand: aMessage [
 	(aMessage selector beginsWith: 'visitPerl') ifFalse: [ super doesNotUnderstand: aMessage ].
 
-	code := aMessage selector , 'aTSNode 
+	self class compile: (self createVisitMethod: aMessage) classified: #visiting.
 
-	^self visitPerlAbstractNode: aTSNode'.
+	self
+		perform: aMessage selector
+		with: aMessage arguments first
+		with: aMessage arguments second
+]
 
-	self class compile: code classified: #visiting.
+{ #category : 'visiting' }
+TreeSitterPerlVisitor >> visitKey: aKey inDictionnary: childrenDictionnary [
+	"childrenDictionnary of  fields and their associated nodes.
+	 Visit the nodes and put the result back in the childrenDictionnary"
 
-	self visitNode: aMessage arguments first
+	| child |
+	child := childrenDictionnary at: aKey ifAbsent: [^nil].
+
+	childrenDictionnary
+		at: aKey
+		put: (child isCollection
+			ifTrue: [ child collect: [ :c | c accept: self ] ]
+			ifFalse: [ child accept: self ]).
+
+	^childrenDictionnary 
 ]
 
 { #category : 'visiting' }
 TreeSitterPerlVisitor >> visitNode: aTSNode [
 
 	| selector |
-	selector := 'visitPerl' , aTSNode type capitalized , ':'.
-	^self perform: selector asSymbol with: aTSNode
+	selector := String streamContents: [ :st |
+		st << 'visitPerl'.
+		($_ split: aTSNode type) do: [ :word | st << word capitalized ].
+		st << ':withFields:'
+	].
+
+	^self
+		perform: selector asSymbol
+		with: aTSNode
+		with: aTSNode collectFieldNameOfNamedChild
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlAbstractNode: aTSNode [
+TreeSitterPerlVisitor >> visitPerlAmbiguousFunctionCallExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: 'function' inDictionnary: fields.
+		self visitKey: 'arguments' inDictionnary: fields.
+	}
 
-	super visitNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlAmbiguous_function_call_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlAnonymousHashExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlAnonymous_hash_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlArray: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlArray:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlAssignmentExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: 'left' inDictionnary: fields.
+		self visitKey: 'right' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlAssignment_expression: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlAutoquotedBareword: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlAutoquoted_bareword:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlBareword: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlBareword:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlBlock: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlBlock:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlComment: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlComment: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlEscapeSequence: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlEscape_sequence:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlExpressionStatement: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlExpression_statement: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlFunc1opCallExpression: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlFunc1op_call_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlFunction: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlFunction:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlHashElementExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+		self visitKey: 'key' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlHash_element_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlInterpolatedStringLiteral: aTSNode withFields: fields [
+	^{
+		self visitKey: 'content' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlInterpolated_string_literal:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlListExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlList_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlPackage: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlNumber: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlPackageStatement: aTSNode withFields: fields [
+	^{
+		self visitKey: 'name' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlPackage: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlPostfixConditionalExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+		self visitKey: 'condition' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlPackage_statement: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlReturnExpression: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlPostfix_conditional_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlScalar: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlReturn_expression:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlSourceFile: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlScalar: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlStringContent: aTSNode withFields: fields [
+	^{
+		self visitKey: '<unnamedChild>' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlSource_file: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlSubroutineDeclarationStatement: aTSNode withFields: fields [
+	^{
+		self visitKey: 'name' inDictionnary: fields.
+		self visitKey: 'body' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlString_content:aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlVariableDeclaration: aTSNode withFields: fields [
+	^{
+		self visitKey: 'variable' inDictionnary: fields.
+	}
 
-	^self visitPerlAbstractNode: aTSNode
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlSubroutine_declaration_statement: aTSNode [ 
+TreeSitterPerlVisitor >> visitPerlVarname: aTSNode withFields: fields [
+	^{
+	}
 
-	^self visitPerlAbstractNode: aTSNode
-]
-
-{ #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlVariable_declaration: aTSNode [ 
-
-	^self visitPerlAbstractNode: aTSNode
-]
-
-{ #category : 'visiting' }
-TreeSitterPerlVisitor >> visitPerlVarname: aTSNode [ 
-
-	^self visitPerlAbstractNode: aTSNode
 ]
