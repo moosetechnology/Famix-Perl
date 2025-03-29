@@ -43,22 +43,18 @@ TreeSitterPerlDumpVisitor >> sourceCode: aString [
 	sourceCode := aString 
 ]
 
-{ #category : 'instance creation' }
-TreeSitterPerlDumpVisitor >> traceFields: aTSNode [
+{ #category : 'tracing' }
+TreeSitterPerlDumpVisitor >> traceNode: aTSNode [
 
-	| fields |
-	fields := aTSNode collectFieldNameOfNamedChild.
-	outputStream << ' ['.
-	fields keys do: [ :k |
-		outputStream
-			<< ' ' ;
-			<< (k ifEmpty: ['-'])
-	].
-	outputStream << ' ]'.
-
+	self indentedLine.
+	outputStream
+		<< 'visiting ' ;
+		<< aTSNode type.
+	self traceSourceCode: aTSNode.
+	outputStream cr.
 ]
 
-{ #category : 'instance creation' }
+{ #category : 'tracing' }
 TreeSitterPerlDumpVisitor >> traceSourceCode: aTSNode [
 
 	| lines |
@@ -77,18 +73,12 @@ TreeSitterPerlDumpVisitor >> traceSourceCode: aTSNode [
 ]
 
 { #category : 'visiting' }
-TreeSitterPerlDumpVisitor >> visitPerlAbstractNode: aTSNode [
+TreeSitterPerlDumpVisitor >> visitNode: aTSNode [
 
-	self indentedLine.
-	outputStream
-		<< 'visiting ' ;
-		<< aTSNode type.
-	self traceSourceCode: aTSNode.
-	self traceFields: aTSNode.
-	outputStream cr.
+	self traceNode: aTSNode.
 
 	indent := indent  + 1.
-	super visitPerlAbstractNode: aTSNode.
+	super visitNode: aTSNode.
 	indent := indent - 1.
 
 ]
