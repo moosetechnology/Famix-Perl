@@ -36,18 +36,6 @@ TreeSitterPerlVisitor >> createVisitMethod: aMessage [
 
 ]
 
-{ #category : 'reflective operations' }
-TreeSitterPerlVisitor >> doesNotUnderstand: aMessage [
-	(aMessage selector beginsWith: 'visitPerl') ifFalse: [ super doesNotUnderstand: aMessage ].
-
-	self class compile: (self createVisitMethod: aMessage) classified: #visiting.
-
-	self
-		perform: aMessage selector
-		with: aMessage arguments first
-		with: aMessage arguments second
-]
-
 { #category : 'visiting' }
 TreeSitterPerlVisitor >> visitKey: aKey inDictionnary: childrenDictionnary [
 	"childrenDictionnary of  fields and their associated nodes.
